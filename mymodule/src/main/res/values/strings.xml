@@ -1,0 +1,36 @@
+<resources>
+    <string name="app_name">MyModule</string>
+    <string name="my_info">MyInfoApp</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="check">just checking</string>
+    <string name="move_the_task">Move the task</string>
+    <string name="month">Month :</string>
+    <string name="total">Total :</string>
+    <string name="detailed_view_of_month">Detailed View of Month</string>
+    <string name="detailed_view">Detailed View</string>
+    <string name="amount">Amount</string>
+    <string name="savings">Savings</string>
+    <string name="expenses">Expenses</string>
+    <string name="emi">EMI</string>
+    <string name="investment">Investment</string>
+    <string name="spendings">Spendings</string>
+    <string name="income">Income</string>
+    <string name="on_food">On Food</string>
+    <string name="tasks">Tasks</string>
+    <string name="notes">Notes</string>
+    <string name="track">Track</string>
+    <string name="add_note_here">Add note here</string>
+    <string name="new_task">New Task</string>
+    <string name="add_task">Add Task</string>
+    <string name="sources"><![CDATA[{Income -> Job, Others} {EMI -> EMI} {Expenses -> Rent}\n{Savings -> Daily 10Rs/-, Monthly 15%}  {Investments -> Stocks}\n{Spendings -> Daily needs, exclude food} {On Food -> Just on it}]]></string>
+    <string name="new_note">New Note</string>
+    <string name="add_note">Add Note</string>
+    <string name="personal">Personal</string>
+    <string name="finance">Finance</string>
+    <string name="reminder">Reminder</string>
+    <string name="shopping">Shopping</string>
+    <string name="work">Work</string>
+    <string name="health">Health</string>
+</resources>
