@@ -57,9 +57,12 @@ class FetchMonthlyDetails : AppCompatActivity() {
             onBackPressed()
         }
 
+        Log.d("revathi", "on month ${currentMonth.toString()}")
 
         getAllMonthTotal()
-       // monthTotal.observe(this, )
+        Log.d("revathi", "on month 1111 ${currentMonth.toString()}")
+
+        // monthTotal.observe(this, )
         val sharedPref = SharedPref(this)
         sharedPref.addToPreference("investment",editToIntConverter(investmentAmount))
         sharedPref.addToPreference("profit",10)
@@ -87,6 +90,7 @@ class FetchMonthlyDetails : AppCompatActivity() {
         val sum = editToIntConverter(incomeAmount)-editToIntConverter(savingsAmount)-editToIntConverter(expensesAmount)-
                 editToIntConverter(emiAmount)-editToIntConverter(investmentAmount)-editToIntConverter(spendingsAmount)-
                 editToIntConverter(onFoodAmount)
+        Log.d("revathi", "on sum amount $sum ${editToIntConverter(onFoodAmount)}")
         return sum
     }
 
@@ -125,8 +129,9 @@ class FetchMonthlyDetails : AppCompatActivity() {
     }
 
     fun addMonthlyData() {
+        Log.d("revathi", "${currentMonth?.text}on food amount $onFoodAmount ${editToIntConverter(onFoodAmount)} ")
         val trackMonthlyItems = TrackMonthlyItems(
-            currentMonth.toString(),
+            currentMonth?.text.toString(),
             editToIntConverter(incomeAmount),
             editToIntConverter(savingsAmount),
             editToIntConverter(expensesAmount),
@@ -142,5 +147,10 @@ class FetchMonthlyDetails : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
+    }
+
+    override fun onResume() {
+        Log.d("revathi", "on month resume ${currentMonth.toString()}   ${currentMonth?.text}")
+        super.onResume()
     }
 }

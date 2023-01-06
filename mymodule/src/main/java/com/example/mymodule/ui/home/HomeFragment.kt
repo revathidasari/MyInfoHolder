@@ -8,13 +8,16 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.mymodule.Task
+import com.example.mymodule.*
 import com.example.mymodule.databinding.FragmentHomeBinding
 import com.example.mymodule.util.SharedPref
 import com.example.mymodule.util.WriteAndReadFileData
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class HomeFragment : Fragment() {
@@ -37,6 +40,7 @@ class HomeFragment : Fragment() {
     ): View {
         val homeViewModel =
             ViewModelProvider(this).get(HomeViewModel::class.java)
+        val taskDao : TaskDao = TaskDatabase.createAndGetTaskDBInstance(this.requireContext()).taskDao
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
@@ -50,16 +54,25 @@ class HomeFragment : Fragment() {
             textView.text = it
         }
 
-        taskRecyclerView.adapter = homeViewModel.taskAdapterView
+        val taskAdapter = TaskAdapterView(listOf(), ListClickListener { task->
+            homeViewModel.deleteTask(task, taskDao)
+        })
+        taskRecyclerView.adapter = taskAdapter//homeViewModel.taskAdapterView
         taskRecyclerView.layoutManager = LinearLayoutManager(context)
+
+        homeViewModel.getAllTasks(taskDao).observe(this.requireActivity(), Observer {
+            taskAdapter.tasks = it
+            taskAdapter.notifyDataSetChanged()
+        })
 
         addTaskButton.setOnClickListener {
             val title: String = addTaskText.text.toString()
             val task = Task(title, false)
-            homeViewModel.taskList.add(task)
+            homeViewModel.insertTask(task, taskDao)
+           /* homeViewModel.taskList.add(task)
             homeViewModel.taskAdapterView.notifyItemInserted(
                 homeViewModel.taskList.size -1
-            )
+            )*/
             addTaskText.text.clear()
 
 

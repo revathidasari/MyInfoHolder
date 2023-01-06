@@ -33,13 +33,14 @@
         android:id="@+id/addTaskText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/new_task"
         android:layout_marginStart="@dimen/margin_8"
-        android:layout_marginBottom="@dimen/margin_8"
         android:layout_marginEnd="@dimen/margin_8"
-        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginBottom="@dimen/margin_8"
+        android:hint="@string/new_task"
+        android:minHeight="48dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/addTaskButton"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/addTaskButton"

@@ -10,10 +10,10 @@ android {
 
     defaultConfig {
         applicationId "com.example.mymodule"
-        minSdk 21
+        minSdk 24
         targetSdk 32
         versionCode 1
-        versionName "1.0"
+        versionName "1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -54,7 +54,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
 
     //Room and Architectural components
-    implementation "androidx.room:room-ktx:2.4.3"
+    implementation "androidx.room:room-ktx:2.4.3" //kotlin extensions & coroutines support for Room
     implementation "androidx.room:room-runtime:2.4.3"
     kapt "androidx.room:room-compiler:2.4.3"
  //   implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.1"
@@ -64,8 +64,8 @@ dependencies {
     //Co-routines
    // implementation "androidx.room:room-coroutines:2.1.0-alpha04" //commented as getting duplicate class error
 
-    //implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0'
-    //    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.0'
+        implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.0"
     // //ViewModel
     //    implementation "androidx.lifecycle:lifecycle-extensions:$lifecycle_version"
     //    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"

@@ -4,8 +4,11 @@ import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.mymodule.Task
 import com.example.mymodule.TaskAdapterView
+import com.example.mymodule.TaskDao
+import kotlinx.coroutines.launch
 
 class HomeViewModel : ViewModel() {
 //(application : Application) : AndroidViewModel(application) {
@@ -24,7 +27,7 @@ class HomeViewModel : ViewModel() {
         Task("Add daily tasks here", false)
     )
 
-    val taskAdapterView = TaskAdapterView(taskList, this)
+//    val taskAdapterView = TaskAdapterView(taskList, this)
 
     fun delete(currentItem: Task) {
         Log.d("revathi","vm " +currentItem)
@@ -37,5 +40,24 @@ class HomeViewModel : ViewModel() {
         return 0
     }
 
+    fun insertTask(task: Task, taskDao: TaskDao) {
+        viewModelScope.launch {
+            try {
+                taskDao.insertTask(task)
+            } catch (e:Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun deleteTask(task: Task, taskDao: TaskDao) {
+        viewModelScope.launch {
+            taskDao.deleteTask(task)
+        }
+    }
+
+    fun getAllTasks(taskDao: TaskDao) : LiveData<List<Task>> {
+        return taskDao.getAllTasks()
+    }
 
 }

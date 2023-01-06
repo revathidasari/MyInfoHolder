@@ -12,7 +12,8 @@ import com.example.mymodule.ui.home.HomeViewModel
 
 class TaskAdapterView(
     var tasks : List<Task>,
-    private val homeViewModel: HomeViewModel
+    private val clickListener : ListClickListener
+    //private val homeViewModel: HomeViewModel
 ) : RecyclerView.Adapter<TaskAdapterView.TaskViewHolder>() {
 
     private var count : Int = 0
@@ -34,8 +35,9 @@ class TaskAdapterView(
         taskMover.setOnLongClickListener {
             //add snack bar to undo the action
             Log.d("revathi","adapter " +currentItem)
-            homeViewModel.delete(currentItem)
-            notifyItemRemoved(position)
+            //homeViewModel.delete(currentItem)
+            //notifyItemRemoved(position)
+            clickListener.onLongClick(currentItem)
             false
         }
 
@@ -55,4 +57,8 @@ class TaskAdapterView(
         return 0
     }
     //moveable/draggable implementation pending on this view
+}
+
+class ListClickListener(val clickListener: (task : Task) -> Unit) {
+    fun onLongClick(task: Task) = clickListener(task)
 }
