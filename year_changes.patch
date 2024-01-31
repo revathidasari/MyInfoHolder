@@ -1,0 +1,390 @@
+diff --git a/mymodule/src/main/java/com/example/mymodule/FetchMonthlyDetails.kt b/mymodule/src/main/java/com/example/mymodule/FetchMonthlyDetails.kt
+index 0f0b3af..6dba87a 100644
+--- a/mymodule/src/main/java/com/example/mymodule/FetchMonthlyDetails.kt
++++ b/mymodule/src/main/java/com/example/mymodule/FetchMonthlyDetails.kt
+@@ -16,6 +16,7 @@ import com.example.mymodule.util.SharedPref
+ class FetchMonthlyDetails : AppCompatActivity() {
+ 
+     private var backBtn : ImageButton? = null
++    var currentYear : TextView? = null
+     var currentMonth : TextView? = null
+     var incomeAmount : EditText? = null
+     var savingsAmount : EditText? = null
+@@ -41,6 +42,7 @@ class FetchMonthlyDetails : AppCompatActivity() {
+         setContentView(R.layout.item_month_specific)
+ 
+         backBtn = findViewById(R.id.backArrow)
++        currentYear= findViewById(R.id.currentYear)
+         currentMonth= findViewById(R.id.currentMonth)
+         incomeAmount = findViewById(R.id.incomeAmount)
+         savingsAmount = findViewById(R.id.savingsAmount)
+@@ -52,6 +54,7 @@ class FetchMonthlyDetails : AppCompatActivity() {
+         totalText = findViewById(R.id.totalText)
+         totalButton = findViewById(R.id.totalButton)
+         currentMonth?.text = intent.getStringExtra("month").toString()
++        currentYear?.text = intent.getStringExtra("year").toString()
+ 
+         backBtn?.setOnClickListener{
+             onBackPressed()
+@@ -120,11 +123,11 @@ class FetchMonthlyDetails : AppCompatActivity() {
+         }
+     }
+ 
+-    fun getMonthSpecificData(month : String) : Int {
++    fun getMonthSpecificData(month : String, year : Int) : Int {
+         trackMonthlyViewModel.getAllTrackedMonthlyItems().observe(this){
+          //   monthTotal = sumAmount()
+         }
+-        trackMonthlyViewModel.getSelectedMonthDetails(month)
++        trackMonthlyViewModel.getSelectedMonthDetails(month, year)
+         return 0
+     }
+ 
+@@ -132,6 +135,7 @@ class FetchMonthlyDetails : AppCompatActivity() {
+         Log.d("revathi", "${currentMonth?.text}on food amount $onFoodAmount ${editToIntConverter(onFoodAmount)} ")
+         val trackMonthlyItems = TrackMonthlyItems(
+             currentMonth?.text.toString(),
++            currentYear?.text.toString().toInt(),
+             editToIntConverter(incomeAmount),
+             editToIntConverter(savingsAmount),
+             editToIntConverter(expensesAmount),
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackAdapterView.kt b/mymodule/src/main/java/com/example/mymodule/TrackAdapterView.kt
+index 8521e75..aeb40db 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackAdapterView.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackAdapterView.kt
+@@ -13,6 +13,7 @@ import com.example.mymodule.ui.notifications.NotificationsViewModel
+ 
+ class TrackAdapterView(
+     val tracks : List<Track>,
++    val year : Int,
+     private val notificationsViewModel: NotificationsViewModel
+ ) : RecyclerView.Adapter<TrackAdapterView.TrackViewHolder>() {
+ 
+@@ -31,6 +32,8 @@ class TrackAdapterView(
+             findViewById<ImageButton>(R.id.detailedMonth).setOnClickListener{
+                 val intent = Intent(this.context, FetchMonthlyDetails::class.java)
+                 val bundle = Bundle()
++                bundle.putString("year", year.toString())
++                Log.d("revathi","year isssss ${year}")
+                 bundle.putString("month", currentItemPosition.monthTitle)
+                 intent.putExtras(bundle)
+                 it.context.startActivity(intent, bundle)
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDao.kt b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDao.kt
+index 6647778..bdeb08d 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDao.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDao.kt
+@@ -7,6 +7,8 @@ import androidx.room.Insert
+ import androidx.room.OnConflictStrategy
+ import androidx.room.Query
+ import androidx.room.Transaction
++import java.time.Year
++import java.time.YearMonth
+ 
+ @Dao
+ interface TrackMonthlyDao {
+@@ -21,6 +23,6 @@ interface TrackMonthlyDao {
+     fun getAllTrackedMonthlyItems() : LiveData<List<TrackMonthlyItems>> //LiveData<List<TrackMonthlyItems>>
+ 
+     @Transaction
+-    @Query("SELECT * FROM monthly_items WHERE month_name = :monthName")
+-    fun getSelectedMonthDetails(monthName : String) : TrackMonthlyItems
++    @Query("SELECT * FROM monthly_items WHERE month_name = :monthName AND year =:year")
++    fun getSelectedMonthDetails(monthName : String, year : Int) : TrackMonthlyItems
+ }
+\ No newline at end of file
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDatabase.kt b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDatabase.kt
+index 8b417ab..64d48cb 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDatabase.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyDatabase.kt
+@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase
+ 
+ @Database(
+     entities = [TrackMonthlyItems::class],
+-    version = 1
++    version = 2
+ )
+ abstract class TrackMonthlyDatabase : RoomDatabase() {
+ 
+@@ -32,6 +32,7 @@ abstract class TrackMonthlyDatabase : RoomDatabase() {
+             TrackMonthlyDatabase::class.java,
+             "monthly_track_db")
+                 .allowMainThreadQueries()
++                .fallbackToDestructiveMigration()
+                 .build()
+ 
+ 
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyItems.kt b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyItems.kt
+index fd0d259..bca8626 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyItems.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyItems.kt
+@@ -13,6 +13,9 @@ data class TrackMonthlyItems(
+     @ColumnInfo(name = "month_name")
+     val name : String,
+ 
++    @ColumnInfo(name = "year")
++    val year : Int,
++
+     @ColumnInfo(name = "income")
+     val incomeAmount : Int,
+ 
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyRepository.kt b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyRepository.kt
+index 3af1139..b93fa39 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyRepository.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyRepository.kt
+@@ -10,6 +10,6 @@ class TrackMonthlyRepository(
+ 
+     fun getAllTrackedMonthlyItems() = db.getTrackMonthlyDao().getAllTrackedMonthlyItems()
+ 
+-    suspend fun getSelectedMonthDetails(month: String): TrackMonthlyItems
+-    = db.getTrackMonthlyDao().getSelectedMonthDetails(month)
++    suspend fun getSelectedMonthDetails(month: String, year: Int): TrackMonthlyItems
++    = db.getTrackMonthlyDao().getSelectedMonthDetails(month, year)
+ }
+\ No newline at end of file
+diff --git a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyViewModel.kt b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyViewModel.kt
+index e8614a2..3e4b720 100644
+--- a/mymodule/src/main/java/com/example/mymodule/TrackMonthlyViewModel.kt
++++ b/mymodule/src/main/java/com/example/mymodule/TrackMonthlyViewModel.kt
+@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.Dispatchers
+ import kotlinx.coroutines.launch
+ import kotlinx.coroutines.runBlocking
++import java.time.YearMonth
+ 
+ //https://medium.com/android-beginners/material-chips-material-components-for-android-dd0ef942e5ce
+ 
+@@ -23,9 +24,9 @@ class TrackMonthlyViewModel(
+ 
+     fun getAllTrackedMonthlyItems() = repository.getAllTrackedMonthlyItems()
+ 
+-    fun getSelectedMonthDetails(month: String) =
++    fun getSelectedMonthDetails(month: String, year: Int) =
+         viewModelScope.launch {
+-            repository.getSelectedMonthDetails(month)
++            repository.getSelectedMonthDetails(month, year)
+         }
+ 
+    // fun addItem(item:TrackMonthlyItems) = runBlocking { repository.insertAndUpdate(item) }
+diff --git a/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsFragment.kt b/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsFragment.kt
+index de729da..cf72569 100644
+--- a/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsFragment.kt
++++ b/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsFragment.kt
+@@ -1,11 +1,15 @@
+ package com.example.mymodule.ui.notifications
+ 
+ import android.os.Bundle
++import android.util.Log
+ import android.view.LayoutInflater
+ import android.view.View
+ import android.view.ViewGroup
++import android.widget.RadioButton
++import android.widget.RadioGroup
+ import android.widget.TextView
+ import androidx.fragment.app.Fragment
++import androidx.lifecycle.MutableLiveData
+ import androidx.lifecycle.ViewModelProvider
+ import androidx.recyclerview.widget.LinearLayoutManager
+ import androidx.recyclerview.widget.RecyclerView
+@@ -43,6 +47,47 @@ class NotificationsFragment : Fragment() {
+         val root: View = binding.root
+ 
+         val textView: TextView = binding.textNotifications
++
++        val radioGroup: RadioGroup = binding.yearRadioGroup
++        var radioButton: RadioButton
++        /*     radioGroup.setOnClickListener {
++                 val checkedId = radioGroup.checkedRadioButtonId
++                 val radioButton = it.findViewById<RadioButton>(checkedId)
++                 Log.d("revathi", "selected year     $checkedId id ${radioButton.text}")
++
++             }*/
++
++        /*  radioGroup.setOnCheckedChangeListener { radioGroup, i ->
++              Log.d("revathi", "selected year     $i iddddddddd ")
++
++          }*/
++
++        radioGroup.setOnCheckedChangeListener{group, checkedId ->
++            /* when(checkedId) {
++                 0-> radio23.isChecked = true
++                 1-> radio24.isChecked = true
++                 2-> radio25.isChecked = true
++             }*/
++            val id = group.checkedRadioButtonId
++            radioButton = group.findViewById(checkedId)
++
++            // Log.d("revathi", "selected year---- $checkedId  ${group.checkedRadioButtonId}")
++            Log.d("revathi", "selected year---- $id ${radioButton.text}")
++//            notificationsViewModel.sendSelectedButton(radioButton.text.toString().toInt())
++
++          //  notificationsViewModel.currentNum.value = radioButton.text.toString().toInt()
++            notificationsViewModel.getCounter(radioButton.text.toString().toInt())
++        }
++
++       notificationsViewModel.counter.observe(viewLifecycleOwner) {
++
++       }
++
++
++/*        notificationsViewModel.radioButtonSelection.observe(viewLifecycleOwner){
++                notificationsViewModel.currentYear = it
++        }*/
++
+         notificationsViewModel.text.observe(viewLifecycleOwner) {
+             textView.text = it
+         }
+@@ -54,6 +99,10 @@ class NotificationsFragment : Fragment() {
+         return root
+     }
+ 
++    private fun selectYear() {
++
++    }
++
+     fun specificMonthView(monthTitle: String) {
+       //  TrackerAdapter()
+     }
+diff --git a/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsViewModel.kt b/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsViewModel.kt
+index 5ba56d8..f854339 100644
+--- a/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsViewModel.kt
++++ b/mymodule/src/main/java/com/example/mymodule/ui/notifications/NotificationsViewModel.kt
+@@ -1,5 +1,6 @@
+ package com.example.mymodule.ui.notifications
+ 
++import android.util.Log
+ import androidx.lifecycle.LiveData
+ import androidx.lifecycle.MutableLiveData
+ import androidx.lifecycle.ViewModel
+@@ -7,13 +8,31 @@ import androidx.lifecycle.viewModelScope
+ import com.example.mymodule.*
+ import kotlinx.coroutines.launch
+ 
++//
+ class NotificationsViewModel : ViewModel() {
++//    var currentYear : Int = 0
++
++    var yyy = 99
++    val currentNum: MutableLiveData<Int> by lazy {
++        MutableLiveData<Int>()
++    }
++    private val _counter = MutableLiveData<Int>(2023)
++    val counter: LiveData<Int> = _counter
++
++    fun getCounter(a: Int) {
++        _counter.value = a
++    }
+ 
+     private val _text = MutableLiveData<String>().apply {
+         value = "This is notifications Fragment"
+     }
+     val text: LiveData<String> = _text
+ 
++/*    private val _radioButtonSelection = MutableLiveData<Int>().apply {
++        value = 1
++    }
++    val radioButtonSelection: LiveData<Int> = _radioButtonSelection*/
++
+     val monthList = listOf(
+         Track("January", 0, false),
+         Track("February", 0, false),
+@@ -29,11 +48,17 @@ class NotificationsViewModel : ViewModel() {
+         Track("December", 0, false)
+     )
+ 
+-    val trackAdapterView = TrackAdapterView(tracks = monthList, this)
++ /*   fun sendSelectedButton(i: Int) {
++        currentYear = i
++        Log.d("revathi","selefted btn is $i    $currentYear")
++    }
++*/
++    val trackAdapterView = TrackAdapterView(tracks = monthList,
++     _counter.value.toString().toInt(),this)
+ 
+-    fun detailedMonthView(monthTitle: String) {
++    fun detailedMonthView(monthTitle: String, year: Int) {
+         this.viewModelScope.launch {
+-            FetchMonthlyDetails().getMonthSpecificData(monthTitle)
++            FetchMonthlyDetails().getMonthSpecificData(monthTitle, year)
+           //NotificationsFragment().specificMonthView(monthTitle)
+         }
+     }
+diff --git a/mymodule/src/main/res/layout/fragment_notifications.xml b/mymodule/src/main/res/layout/fragment_notifications.xml
+index 4b86b11..53f9eee 100644
+--- a/mymodule/src/main/res/layout/fragment_notifications.xml
++++ b/mymodule/src/main/res/layout/fragment_notifications.xml
+@@ -16,17 +16,48 @@
+         android:textAlignment="center"
+         android:textSize="@dimen/text20"
+         android:text="@string/track"
+-        android:visibility="gone"
++        android:visibility="visible"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
+ 
++    <RadioGroup
++        android:id="@+id/yearRadioGroup"
++        android:layout_width="match_parent"
++        android:layout_height="@dimen/margin_30"
++        android:layout_marginTop="@dimen/margin_8"
++        android:layout_marginStart="@dimen/margin_8"
++        android:orientation="horizontal"
++        app:layout_constraintTop_toBottomOf="@id/text_notifications">
++
++        <RadioButton
++            android:id="@+id/year23"
++            android:layout_width="wrap_content"
++            android:layout_height="match_parent"
++            android:layout_marginStart="@dimen/margin_8"
++            android:checked="true"
++            android:text="2023"/>
++        <RadioButton
++            android:id="@+id/year24"
++            android:layout_width="wrap_content"
++            android:layout_height="match_parent"
++            android:layout_marginStart="@dimen/margin_8"
++            android:text="2024"/>
++        <RadioButton
++            android:id="@+id/year25"
++            android:layout_width="wrap_content"
++            android:layout_height="match_parent"
++            android:layout_marginStart="@dimen/margin_8"
++            android:text="2025"/>
++
++    </RadioGroup>
++
+     <androidx.recyclerview.widget.RecyclerView
+         android:id="@+id/notifList"
+         android:layout_width="match_parent"
+         android:layout_height="0dp"
+         android:layout_marginTop="@dimen/margin_8"
+         app:layout_constraintStart_toStartOf="parent"
+-        app:layout_constraintTop_toBottomOf="@+id/text_notifications"
++        app:layout_constraintTop_toBottomOf="@+id/yearRadioGroup"
+         app:layout_constraintBottom_toBottomOf="parent" />
+ 
+ 
+diff --git a/mymodule/src/main/res/layout/item_month_specific.xml b/mymodule/src/main/res/layout/item_month_specific.xml
+index d32ab12..eb1398a 100644
+--- a/mymodule/src/main/res/layout/item_month_specific.xml
++++ b/mymodule/src/main/res/layout/item_month_specific.xml
+@@ -22,9 +22,19 @@
+         android:layout_margin="@dimen/margin_8"
+         android:textSize="@dimen/text26"
+         app:layout_constraintBottom_toTopOf="@id/monthDivider"
+-        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintEnd_toStartOf="@id/currentYear"
+         app:layout_constraintStart_toStartOf="parent"
+         app:layout_constraintTop_toTopOf="parent" />
++    <TextView
++        android:id="@+id/currentYear"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_margin="@dimen/margin_8"
++        android:textSize="@dimen/text26"
++        app:layout_constraintBottom_toTopOf="@id/monthDivider"
++        app:layout_constraintEnd_toEndOf="parent"
++        app:layout_constraintStart_toEndOf="@id/currentMonth"
++        app:layout_constraintTop_toTopOf="parent" />
+ 
+     <androidx.constraintlayout.widget.Guideline
+         android:id="@+id/monthDivider"
